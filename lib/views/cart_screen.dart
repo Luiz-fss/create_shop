@@ -1,4 +1,4 @@
-import 'package:create_shop/providers/cartProvider.dart';
+import 'package:create_shop/providers/cart_provider.dart';
 import 'package:create_shop/providers/order_provider.dart';
 import 'package:create_shop/widgets/cart_item_widget.dart';
 import 'package:flutter/material.dart';
@@ -39,7 +39,7 @@ class CartScreen extends StatelessWidget {
                          color: Theme.of(context).primaryTextTheme.title.color
                        ),
                     ),
-                    backgroundColor: Theme.of(context).accentColor,
+                    backgroundColor: Theme.of(context).primaryColor,
                   ),
                   Spacer(),
                   FlatButton(

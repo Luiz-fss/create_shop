@@ -1,9 +1,6 @@
-
-
 import 'dart:math';
-
-import 'package:create_shop/providers/cartProvider.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:create_shop/providers/cart_provider.dart';
+import 'package:flutter/material.dart';
 
 class Order {
   final String id;

@@ -1,12 +1,8 @@
-import 'package:create_shop/data/dummy_data.dart';
-import 'package:create_shop/models/product.dart';
-import 'package:create_shop/providers/cartProvider.dart';
-import 'package:create_shop/providers/product_provider.dart';
+import 'package:create_shop/providers/cart_provider.dart';
 import 'package:create_shop/util/app_routes.dart';
 import 'package:create_shop/widgets/app_drawer.dart';
 import 'package:create_shop/widgets/badge.dart';
 import 'package:create_shop/widgets/grid_product.dart';
-import 'package:create_shop/widgets/product_item.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -47,7 +43,7 @@ class _ProductOverviewScreenState extends State<ProductOverviewScreen> {
                 }
               });
             },
-            itemBuilder: (context){
+            itemBuilder: (_){
               return [
                 PopupMenuItem(
                   child: Text("Somente Favoritos"),
@@ -60,18 +56,19 @@ class _ProductOverviewScreenState extends State<ProductOverviewScreen> {
               ];
             },
           ),
+
+          //Consumer vai alterar um ponto especifico dentro da arvore
           Consumer<Cart>(
-            child: IconButton(
-              icon: Icon(Icons.shopping_cart),
-              onPressed: (){
-                Navigator.of(context).pushNamed(
-                  AppRoutes.CART
-                );
-              },
-            ),
             builder:(_,cart,child)=> Badge(
               value: cart.itemCount.toString(),
-              child: child,
+                child: IconButton(
+                  icon: Icon(Icons.shopping_cart),
+                  onPressed: (){
+                    Navigator.of(context).pushNamed(
+                        AppRoutes.CART
+                    );
+                  },
+                )
             ),
           )
         ],

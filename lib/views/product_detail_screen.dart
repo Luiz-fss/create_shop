@@ -1,10 +1,7 @@
 import 'package:create_shop/models/product.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class ProductDetailScreen extends StatelessWidget {
-
-
   @override
   Widget build(BuildContext context) {
 
