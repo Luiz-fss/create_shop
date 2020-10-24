@@ -1,4 +1,6 @@
-
+import 'dart:convert';
+import 'package:create_shop/util/constant.dart';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 
 class Product with ChangeNotifier{
@@ -21,8 +23,24 @@ class Product with ChangeNotifier{
       }
       );
 
-    toggleFavorite(){
-    isFavorite = !isFavorite;
-    notifyListeners();
+    void changeFavorite(){
+      isFavorite = !isFavorite;
+      notifyListeners();
+    }
+    Future<void>toggleFavorite()async{
+      changeFavorite();
+    try{
+      final url = "${Constants.BASE_API_URL}/products.${id}.json";
+
+      final response = await http.patch(url,
+          body: json.encode({
+            "isFavorite": isFavorite
+          }));
+      if(response.statusCode>=400){
+        changeFavorite();
+      }
+    }catch(e){
+      changeFavorite();
+    }
   }
 }

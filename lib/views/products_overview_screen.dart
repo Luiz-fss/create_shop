@@ -1,4 +1,5 @@
 import 'package:create_shop/providers/cart_provider.dart';
+import 'package:create_shop/providers/product_provider.dart';
 import 'package:create_shop/util/app_routes.dart';
 import 'package:create_shop/widgets/app_drawer.dart';
 import 'package:create_shop/widgets/badge.dart';
@@ -20,9 +21,23 @@ class ProductOverviewScreen extends StatefulWidget {
 class _ProductOverviewScreenState extends State<ProductOverviewScreen> {
 
   bool _showFavoriteOnly=false;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    /*Obtendo os dados do firebase*/
+    Provider.of<ProductProvider>(context,listen: false).loadProducts().then((_){
+      setState(() {
+        _isLoading = false;
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+
     //final ProductProvider productProvider = Provider.of(context);
     //final Cart cart = Provider.of<Cart>(context);
     return Scaffold(
@@ -53,6 +68,7 @@ class _ProductOverviewScreenState extends State<ProductOverviewScreen> {
                   child: Text("Todos"),
                   value: FilterOptions.ALL,
                 ),
+                
               ];
             },
           ),
@@ -68,12 +84,15 @@ class _ProductOverviewScreenState extends State<ProductOverviewScreen> {
                         AppRoutes.CART
                     );
                   },
+
                 )
             ),
           )
         ],
       ),
-      body: GridProduct(_showFavoriteOnly),
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator(),)
+          :GridProduct(_showFavoriteOnly),
       drawer: AppDrawer(),
     );
   }

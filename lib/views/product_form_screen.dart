@@ -9,10 +9,12 @@ class ProductFormScreen extends StatefulWidget {
 }
 
 class _ProductFormScreenState extends State<ProductFormScreen> {
+  /*controle do indicador de carrefamentos*/
+  bool _isLoading = false;
 
   //global key do formulario
   final _form = GlobalKey<FormState>();
-  final _formData = Map<String,Object>();
+  final _formData = Map<String, Object>();
 
   /*Gerenciador do foco do teclado para ir para segundo campo ao pressionar
   * "enter" no teclado*/
@@ -20,43 +22,42 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   final _descriptionFocusNode = FocusNode();
 
   /*Perda de foco*/
-  final _imageUrlFocusNode=FocusNode();
+  final _imageUrlFocusNode = FocusNode();
   final _imageUrlController = TextEditingController(text: "imageUrl");
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    _imageUrlFocusNode.addListener(
-        _updateUrl
-    );
+    _imageUrlFocusNode.addListener(_updateUrl);
   }
 
-  void _updateUrl(){
+  void _updateUrl() {
     /*validando o campo de imagem:
     * depois de fazer a entrada de dados para o campo imagem, o texto da url
     * é validado no metodo isValidImageUrl, passando o que o usário digitou
     * como entrada do parametro. Se o retorno for true, significa que está validado
     * e nesse caso, é dado um setState para fazer o update da imagem na perda de foco
     * do teclado.*/
-    if(isValidImageUrl(_imageUrlController.text)){
-      setState(() {
-      });
+    if (isValidImageUrl(_imageUrlController.text)) {
+      setState(() {});
     }
   }
+
   /*só vai ser chamado o setState, se a URL que estiver dentro do campo da imagem
   * estiver válida*/
-  bool  isValidImageUrl(String url){
+  bool isValidImageUrl(String url) {
     //Validação da url
     bool startWithHttp = url.toLowerCase().startsWith('http://');
     bool startWithHttps = url.toLowerCase().startsWith('https://');
     bool endWithPng = url.toLowerCase().endsWith(".png");
     bool endWithJpg = url.toLowerCase().endsWith(".jpg");
     bool endWithJpeg = url.toLowerCase().endsWith(".jpeg");
-    return (startWithHttp || startWithHttps) && (endWithPng || endWithJpg || endWithJpeg);
+    return (startWithHttp || startWithHttps) &&
+        (endWithPng || endWithJpg || endWithJpeg);
     //retornando true a expressão significa que passou nas validações
   }
-  
+
   @override
   void dispose() {
     // TODO: implement dispose
@@ -67,16 +68,16 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     _imageUrlFocusNode.dispose();
   }
 
-  void _saveForm(){
+  Future<void> _saveForm() async {
     /*antes de salvar, chamar os metodos do parametro validator
     * se o formulario for valido retorna verdadeiro*/
-    var isValid =_form.currentState.validate();
+    var isValid = _form.currentState.validate();
 
     //validação do formulário
     /*caso formulário não for válido, não irá fazer nada, e os processos abaixo
     * do if, como salvar e criar um novo produto não serão feitos, pois irá
     * sair da função*/
-    if(!isValid){
+    if (!isValid) {
       return;
     }
 
@@ -87,25 +88,62 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     * _form.current.save()*/
 
     final newProduct = Product(
-      id: _formData["id"],
-      title: _formData["title"],
-      price: _formData["price"],
-      description: _formData["description"],
-      imageUrl: _formData["imageUrl"]
-    );
+        id: _formData["id"],
+        title: _formData["title"],
+        price: _formData["price"],
+        description: _formData["description"],
+        imageUrl: _formData["imageUrl"]);
+
+    setState(() {
+      _isLoading = true;
+    });
 
     //salvando o novo produto no provider
-    final products = Provider.of<ProductProvider>(context,listen: false);
+    final products = Provider.of<ProductProvider>(context, listen: false);
     //teste no provider
-    if(_formData["id"]==null){
-      products.addProduct(newProduct);
-    }else{
-      //update
-      products.updateProduct(newProduct);
+    if (_formData["id"] == null) {
+      try {
+        if (_formData["id"] == null) {
+          await products.addProduct(newProduct);
+
+        }else{
+          //update
+         await products.updateProduct(newProduct);
+        }
+        Navigator.of(context).pop();
+      } catch (e) {
+        /*pegando o erro que foi identificado pelo cath no metodo addProduct
+        * para exibir o erro ao usuario*/
+            await showDialog<Null>(
+            context: context,
+            builder: (context) {
+              return AlertDialog(
+                title: Text("Ocorreu um erro!!!!"),
+                content: Text("Ocorreu um erro no salvamento do produto"),
+                actions: <Widget>[
+                  FlatButton(
+                    child: Text("Ok"),
+                    onPressed: () {
+                      /*o future do alert só é chamado quando existe um pop
+                      * ou seja, o then abaixo, só vai ser excecutado dps que
+                      * esse flatbutton for chamado, enquanto não for resolvido
+                      * esse future ele não vai para outro*/
+                      Navigator.of(context).pop();
+                    },
+                  )
+                ],
+              );
+            });
+      }finally{
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
     //saindo da tela após salvar o novo produto
     Navigator.of(context).pop();
   }
+
   //método associado ao state, smp que é renderizado o state permanace e o state é mudado
   @override
   void didChangeDependencies() {
@@ -113,9 +151,9 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     super.didChangeDependencies();
     /*só vamos preencher o _formaData com paramentros vindo de outra tela, caso
     * ele ainda não tenha recebido nada, pq vai indicar que a primeira vez que ele entra na tela*/
-    if(_formData.isEmpty){
+    if (_formData.isEmpty) {
       final product = ModalRoute.of(context).settings.arguments as Product;
-      if(product!=null){
+      if (product != null) {
         _formData["id"] = product.id;
         _formData["title"] = product.title;
         _formData["description"] = product.description;
@@ -124,7 +162,6 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
 
         //inicialização do valor inicial da imagem
         _imageUrlController.text = _formData["imageUrl"];
-
       }
     }
   }
@@ -137,176 +174,155 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         actions: <Widget>[
           IconButton(
             icon: Icon(Icons.save),
-            onPressed: (){
+            onPressed: () {
               _saveForm();
             },
           )
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(15.0),
-        child: Form(
-          key: _form,
-          child: ListView(
-            children: <Widget>[
-              TextFormField(
-                initialValue: _formData["title"],
-                validator: (value){
-                  //função retorna uma string
-                  //retornando null, significa que não tem nenhum erro de validação
-                  bool isEmpty = value.trim().isEmpty;
-                  bool isInvalid = value.trim().length < 3;
-                  if(isEmpty || isInvalid){
-                    //trim() tira espaços em branco
-                    /*Mensagem do return nesse caso será colocada como a
+      body: _isLoading
+          ? Center(
+              child: CircularProgressIndicator(),
+            )
+          : Padding(
+              padding: const EdgeInsets.all(15.0),
+              child: Form(
+                key: _form,
+                child: ListView(
+                  children: <Widget>[
+                    TextFormField(
+                      initialValue: _formData["title"],
+                      validator: (value) {
+                        //função retorna uma string
+                        //retornando null, significa que não tem nenhum erro de validação
+                        bool isEmpty = value.trim().isEmpty;
+                        bool isInvalid = value.trim().length < 3;
+                        if (isEmpty || isInvalid) {
+                          //trim() tira espaços em branco
+                          /*Mensagem do return nesse caso será colocada como a
                   * mensagem de erro do campo*/
-                    return "Informe um titulo válido";
-                    return "Informe uma descrição válida";
-                  }else{
-                    return null;
-                  }
-                },
-                decoration: InputDecoration(
-                  labelText: "Título",
-                  //OBs: também é possivel colocar um texto de erro através do decoration
-                  //errorText: "Teste Erro"
-                ),
-                /*botão do teclado "enter" vai passar para o TextField abaixo*/
-                textInputAction: TextInputAction.next,
-                onFieldSubmitted: (_){
-                  /*Método chamado sempre que é pressionado enter
+                          return "Informe um titulo válido";
+                          return "Informe uma descrição válida";
+                        } else {
+                          return null;
+                        }
+                      },
+                      decoration: InputDecoration(
+                        labelText: "Título",
+                        //OBs: também é possivel colocar um texto de erro através do decoration
+                        //errorText: "Teste Erro"
+                      ),
+                      /*botão do teclado "enter" vai passar para o TextField abaixo*/
+                      textInputAction: TextInputAction.next,
+                      onFieldSubmitted: (_) {
+                        /*Método chamado sempre que é pressionado enter
                   * a variavel está declarada como o focus node do textField
                   * abaixo com isso, quando a campo for subimetido clicando
                   * em enter, vai chamar o FoscusScope que irá requisitar o foco
                   * para a virável passada. Que por estar referenciada em outro
                   * campo, dará o foco para aquele campo*/
-                  FocusScope.of(context).requestFocus(_priceFocusNode);
-                },
-                onSaved: (value){
-                  _formData['title'] = value;
-                },
-              ),
-
-
-
-              TextFormField(
-                initialValue: _formData["price"].toString(),
-                keyboardType: TextInputType.numberWithOptions(decimal: true),
-                focusNode: _priceFocusNode,
-                decoration: InputDecoration(
-                    labelText: "Preço"
-                ),
-                /*botão do teclado "enter" vai passar para o TextField abaixo*/
-                textInputAction: TextInputAction.next,
-                onFieldSubmitted: (_){
-                  FocusScope.of(context).requestFocus(_descriptionFocusNode);
-                },
-                onSaved: (value){
-                  _formData['price'] = double.parse(value);
-                },
-                validator: (value){
-                  /*preço com espaço
-                  * preço nulo ou menor igual 0*/
-                  bool isEmpty = value.trim().isEmpty;
-                  var newPrice = double.tryParse(value);
-                  bool isInvalid = newPrice==null || newPrice <=0;
-                  if(isEmpty || isInvalid){
-                    return "Informe um preço válido";
-                  }else{
-                    return null;
-                  }
-                },
-              ),
-
-
-
-              TextFormField(
-                initialValue: _formData["description"],
-                maxLines: 3,
-                focusNode: _priceFocusNode,
-                keyboardType: TextInputType.multiline,
-                decoration: InputDecoration(
-                    labelText: "Descrição"
-                ),
-                validator: (value){
-                  bool isEmpty = value.trim().isEmpty;
-                  bool isInvalid = value.trim().length < 10;
-                  if(isEmpty || isInvalid){
-                    return "Informe uma descrição válida";
-                  }else{
-                    return null;
-                  }
-                },
-                onSaved: (value){
-                  _formData["description"] = value;
-                },
-
-              ),
-
-
-
-
-
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: <Widget>[
-                  Expanded(
-                    child: TextFormField(
-                      initialValue: _formData["imageUrl"],
-                        validator: (value) {
-                          bool isEmpty = value.trim().isEmpty;
-                          bool isInvalid = !isValidImageUrl(value);
-
-                          if (isEmpty || isInvalid) {
-                            return 'Informe uma URL válida!';
-                          }
-
-                          return null;
-                        },
-                      controller: _imageUrlController,
-                      focusNode: _imageUrlFocusNode,
-                      decoration: InputDecoration(
-                        labelText: "URL da imagem"
-                      ),
-                      keyboardType: TextInputType.url,
-                      textInputAction: TextInputAction.done,
-                      onFieldSubmitted: (_){
-                        _saveForm();
+                        FocusScope.of(context).requestFocus(_priceFocusNode);
                       },
-                        onSaved: (value){
-                          _formData['imageUrl'] = value;
+                      onSaved: (value) {
+                        _formData['title'] = value;
+                      },
+                    ),
+                    TextFormField(
+                      initialValue: _formData["price"].toString(),
+                      keyboardType:
+                          TextInputType.numberWithOptions(decimal: true),
+                      focusNode: _priceFocusNode,
+                      decoration: InputDecoration(labelText: "Preço"),
+                      /*botão do teclado "enter" vai passar para o TextField abaixo*/
+                      textInputAction: TextInputAction.next,
+                      onFieldSubmitted: (_) {
+                        FocusScope.of(context)
+                            .requestFocus(_descriptionFocusNode);
+                      },
+                      onSaved: (value) {
+                        _formData['price'] = double.parse(value);
+                      },
+                      validator: (value) {
+                        /*preço com espaço
+                  * preço nulo ou menor igual 0*/
+                        bool isEmpty = value.trim().isEmpty;
+                        var newPrice = double.tryParse(value);
+                        bool isInvalid = newPrice == null || newPrice <= 0;
+                        if (isEmpty || isInvalid) {
+                          return "Informe um preço válido";
+                        } else {
+                          return null;
                         }
+                      },
                     ),
-                  ),
-                  Container(
-                    width: 100,
-                    height: 100,
-                    margin: EdgeInsets.only(top: 8,left: 10),
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: Colors.grey,
-                        width: 1
-                      )
+                    TextFormField(
+                      initialValue: _formData["description"],
+                      maxLines: 3,
+                      focusNode: _priceFocusNode,
+                      keyboardType: TextInputType.multiline,
+                      decoration: InputDecoration(labelText: "Descrição"),
+                      validator: (value) {
+                        bool isEmpty = value.trim().isEmpty;
+                        bool isInvalid = value.trim().length < 10;
+                        if (isEmpty || isInvalid) {
+                          return "Informe uma descrição válida";
+                        } else {
+                          return null;
+                        }
+                      },
+                      onSaved: (value) {
+                        _formData["description"] = value;
+                      },
                     ),
-                      alignment: Alignment.center,
-                    child: _imageUrlController.text.isEmpty ?
-                        Text("Informe a URL")
-                        : FittedBox(
-                      child: Image.network(
-                        _imageUrlController.text,
-                        fit: BoxFit.cover,
-                      ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: <Widget>[
+                        Expanded(
+                          child: TextFormField(
+                              initialValue: _formData["imageUrl"],
+                              validator: (value) {
+                                bool isEmpty = value.trim().isEmpty;
+                                bool isInvalid = !isValidImageUrl(value);
+
+                                if (isEmpty || isInvalid) {
+                                  return 'Informe uma URL válida!';
+                                }
+
+                                return null;
+                              },
+                              controller: _imageUrlController,
+                              focusNode: _imageUrlFocusNode,
+                              decoration:
+                                  InputDecoration(labelText: "URL da imagem"),
+                              keyboardType: TextInputType.url,
+                              textInputAction: TextInputAction.done,
+                              onFieldSubmitted: (_) {
+                                _saveForm();
+                              },
+                              onSaved: (value) {
+                                _formData['imageUrl'] = value;
+                              }),
+                        ),
+                        Container(
+                            width: 100,
+                            height: 100,
+                            margin: EdgeInsets.only(top: 8, left: 10),
+                            decoration: BoxDecoration(
+                                border:
+                                    Border.all(color: Colors.grey, width: 1)),
+                            alignment: Alignment.center,
+                            child: _imageUrlController.text.isEmpty
+                                ? Text("Informe a URL")
+                                : Image.network(
+                                    _imageUrlController.text,
+                                    fit: BoxFit.cover,
+                                  ))
+                      ],
                     )
-                  )
-                ],
-              )
-
-
-
-            ],
-          ),
-        ),
-      ),
+                  ],
+                ),
+              ),
+            ),
     );
   }
 }

@@ -7,6 +7,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class ProductsScreen extends StatelessWidget {
+
+  Future<void> _refreshProducts(BuildContext context)async{
+    /*LEMBRETE SEMPRE QUE ESTIVER UTILIZANDO O PROVIDER FORA DA ARVORE DE
+    * RENDERIZAÇÃO (fora do build) É PRECISO MUDAR O LISTEN DO PROVIDER PARA FALSE*/
+    await Provider.of<ProductProvider>(context,listen: false).loadProducts();
+  }
+
+
   @override
   Widget build(BuildContext context) {
     final products = Provider.of<ProductProvider>(context);
@@ -26,19 +34,23 @@ class ProductsScreen extends StatelessWidget {
         ],
       ),
       drawer: AppDrawer(),
-      body: Padding(
-
-        padding: EdgeInsets.all(8),
-        child: ListView.builder(
-          itemCount: products.productCount,
-          itemBuilder: (context,index){
-            return Column(
-              children: <Widget>[
-                ProductItem(productList[index]),
-                Divider()
-              ],
-            );
-          },
+      body: RefreshIndicator(
+        onRefresh: (){
+          return _refreshProducts(context);
+        },
+        child: Padding(
+          padding: EdgeInsets.all(8),
+          child: ListView.builder(
+            itemCount: products.productCount,
+            itemBuilder: (context,index){
+              return Column(
+                children: <Widget>[
+                  ProductItem(productList[index]),
+                  Divider()
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
