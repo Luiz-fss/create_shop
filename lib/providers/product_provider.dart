@@ -11,7 +11,11 @@ class ProductProvider with ChangeNotifier{
     *Foi tirado do método e adicionado direto na classe o link*/
    final String _BaseUrl = "${Constants.BASE_API_URL}/products";
 
+   String _token;
+   String _userId;
 
+   ProductProvider([this._token,this._userId,this._items = const []]);
+   
   List<Product> _items = [];
 
   List<Product> get items{
@@ -28,10 +32,14 @@ class ProductProvider with ChangeNotifier{
 
   //Carregar dados
    Future<void>loadProducts()async{
-    final response = await http.get("$_BaseUrl.json");
+    //pasando a flag
+    final response = await http.get("$_BaseUrl.json?auth=$_token");
+    final favResponse = await http.get("${Constants.BASE_API_URL}/userFavorites${_userId}.json?auth");
+    final favMap = json.decode(favResponse.body);
     Map<String,dynamic> data = json.decode(response.body);
     if(data !=null)
     data.forEach((productId, productData){
+      final isFavorite = favMap == null ? false : favMap[productId] ?? false;
       //correção da duplicidade das listas ao ficar trocando de tela
       _items.clear();
 
@@ -41,7 +49,7 @@ class ProductProvider with ChangeNotifier{
         description: productData["description"],
         price: productData["price"],
         imageUrl: productData["imageUrl"],
-        isFavorite: productData["isFavorite"]
+        isFavorite: isFavorite
       ));
       notifyListeners();
     });
@@ -62,13 +70,12 @@ class ProductProvider with ChangeNotifier{
 
  */
     final resposta = await http.post(
-        "$_BaseUrl.json",
+        "$_BaseUrl.json?auth=$_token",
       body: json.encode({
         "title":newProduct.title,
         "descritpion":newProduct.description,
         "price":newProduct.price,
         "imageUrl":newProduct.imageUrl,
-        "isFavorite":newProduct.isFavorite
       })
     );
     _items.add(Product(
@@ -102,7 +109,7 @@ class ProductProvider with ChangeNotifier{
      return prod.id == product.id;
     });
     if(index>=0){
-      await http.patch("$_BaseUrl/${product.id}.json",
+      await http.patch("$_BaseUrl/${product.id}.json?auth=$_token",
       body: json.encode({
         "title":product.title,
         "descritpion":product.description,
@@ -123,7 +130,7 @@ class ProductProvider with ChangeNotifier{
       _items.remove(product);
       notifyListeners();
 
-      final response = await http.delete("$_BaseUrl/${product.id}.json");
+      final response = await http.delete("$_BaseUrl/${product.id}.json?auth=$_token");
 
       //>400 erro na requisição. >500 erro de servidor
       if(response.statusCode >= 400){

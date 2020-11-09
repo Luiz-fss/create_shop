@@ -29,6 +29,11 @@ class Orders with ChangeNotifier{
     * até o .com é a url base
     *Foi tirado do método e adicionado direto na classe o link*/
   final String _BaseUrl = "${Constants.BASE_API_URL}/orders";
+  String _token;
+  String _userId;
+
+  Orders([this._token,this._userId,this._items=const []]);
+
 
   List<Order> _items=[];
 
@@ -41,7 +46,7 @@ class Orders with ChangeNotifier{
 
     List<Order> loadedItems=[];
 
-    final response = await http.get("$_BaseUrl.json");
+    final response = await http.get("$_BaseUrl/$_userId.json?auth=$_token");
     Map<String,dynamic> data = json.decode(response.body);
 
     if(data !=null)
@@ -73,7 +78,7 @@ class Orders with ChangeNotifier{
     //DateTime dateTime = DateTime.now();
     final dateTime = DateTime.now();
 
-    final response = await http.post("$_BaseUrl.json",
+    final response = await http.post("$_BaseUrl/$_userId.json?auth=$_token",
     body: json.encode({
       "amount":cart.totalAmount,
       "date":dateTime.toIso8601String(),//Formato padronizado

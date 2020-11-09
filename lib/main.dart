@@ -1,8 +1,10 @@
+import 'package:create_shop/providers/auth_provider.dart';
 import 'package:create_shop/providers/cart_provider.dart';
-import 'package:create_shop/providers/counter_provider.dart';
 import 'package:create_shop/providers/order_provider.dart';
 import 'package:create_shop/providers/product_provider.dart';
 import 'package:create_shop/util/app_routes.dart';
+import 'package:create_shop/views/auth_home_screen.dart';
+import 'package:create_shop/views/auth_screen.dart';
 import 'package:create_shop/views/cart_screen.dart';
 import 'package:create_shop/views/orders_screen.dart';
 import 'package:create_shop/views/product_detail_screen.dart';
@@ -20,14 +22,20 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
-          create: (_)=> new ProductProvider(),
+          create: (_)=> new AuthProvider(),
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, ProductProvider>(
+          create: (_)=>new ProductProvider(),
+          update: (context, auth, previousProducts)=>new ProductProvider(auth.token,auth.userId,previousProducts.items),
         ),
         ChangeNotifierProvider(
           create: (_)=> new Cart(),
         ),
-        ChangeNotifierProvider(
-          create: (_)=> new Orders(),
-        )
+        ChangeNotifierProxyProvider<AuthProvider, Orders>(
+          create: (_)=>new Orders(),
+          update: (context, auth, previousProducts)=>new Orders(auth.token,auth.userId,previousProducts.items),
+        ),
+
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -39,7 +47,8 @@ class MyApp extends StatelessWidget {
         ),
         //home: ProductOverviewScreen(),
         routes: {
-          AppRoutes.HOME: (context)=> ProductOverviewScreen(),
+          AppRoutes.AUTH_HOME: (context)=> AuthOrHomeScreen(),
+          //AppRoutes.HOME: (context)=> ProductOverviewScreen(),
           AppRoutes.PRODUCT_DETAIL: (context)=> ProductDetailScreen(),
           AppRoutes.CART: (context)=> CartScreen(),
           AppRoutes.ORDERS: (context)=>OrdersScreen(),
