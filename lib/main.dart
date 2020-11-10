@@ -3,6 +3,7 @@ import 'package:create_shop/providers/cart_provider.dart';
 import 'package:create_shop/providers/order_provider.dart';
 import 'package:create_shop/providers/product_provider.dart';
 import 'package:create_shop/util/app_routes.dart';
+import 'package:create_shop/util/custom_route.dart';
 import 'package:create_shop/views/auth_home_screen.dart';
 import 'package:create_shop/views/auth_screen.dart';
 import 'package:create_shop/views/cart_screen.dart';
@@ -43,7 +44,13 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           primarySwatch: Colors.purple,
           accentColor: Colors.deepOrange,
-          fontFamily: "Lato"
+          fontFamily: "Lato",
+          pageTransitionsTheme: PageTransitionsTheme(
+            builders: {
+              TargetPlatform.android: CustomPageTransictionBuilder(),
+              TargetPlatform.iOS: CustomPageTransictionBuilder(),
+            }
+          )
         ),
         //home: ProductOverviewScreen(),
         routes: {

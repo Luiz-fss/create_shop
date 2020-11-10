@@ -10,10 +10,9 @@ class AuthCard extends StatefulWidget {
   _AuthCardState createState() => _AuthCardState();
 }
 
-class _AuthCardState extends State<AuthCard> {
+class _AuthCardState extends State<AuthCard>with SingleTickerProviderStateMixin {
 
   GlobalKey<FormState> _key = GlobalKey();
-
   /*Variavél que vai ajudar no controle.
   * Quando o usuário clicar em entrar os dados vão ir para o firebase
   * durante o processo, não seria viável que ele ficasse clicando repetidas vezes
@@ -29,6 +28,60 @@ class _AuthCardState extends State<AuthCard> {
   /*Atriuto que define o modo de autenticação da aplicação*/
   AuthMode _authMode = AuthMode.Login;
 
+  //variaveis de animação
+  AnimationController _controller;
+  Animation<Size> _heightAnimation;
+  Animation<double> _opacityAnimation;
+  Animation<Offset> _slideAnimation;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 300),
+    );
+
+    /*
+    Descontinuado essa animação
+    _heightAnimation = Tween(
+      begin: Size(double.infinity, 290),
+      end: Size(double.infinity, 371)
+    ).animate(
+      CurvedAnimation(
+        //quem vai controlar
+        parent: _controller,
+        //tipo de curva
+        curve: Curves.linear
+      )
+    );
+     */
+
+    _opacityAnimation = Tween(
+      begin: 0.0,
+      end: 1.0
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.linear
+    ));
+
+    _slideAnimation = Tween<Offset>(
+      begin: Offset(0, 1.5),
+      end: Offset(0.0, 0.0),
+    ).animate(CurvedAnimation(
+        parent: _controller,
+        curve: Curves.linear
+    ));
+
+  }
+
+
+  @override
+  void dispose() {
+    super.dispose();
+    _controller.dispose();
+  }
 
   Map<String, String> _authData={
     "email":"",
@@ -95,10 +148,12 @@ class _AuthCardState extends State<AuthCard> {
       setState(() {
         _authMode = AuthMode.SingUp;
       });
+      _controller.forward();
     }else{
       setState(() {
         _authMode = AuthMode.Login;
       });
+      _controller.reverse();
     }
   }
 
@@ -111,8 +166,11 @@ class _AuthCardState extends State<AuthCard> {
         borderRadius: BorderRadius.circular(10)
       ),
       elevation: 8.0,
-      child: Container(
+      child: AnimatedContainer(
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeIn,
         padding: EdgeInsets.all(16),
+        //height: _heightAnimation.value.height,
         height: _authMode == AuthMode.Login ? 290 : 371,
         width: deviceSize.width * 0.75,
         child: Form(
@@ -125,7 +183,7 @@ class _AuthCardState extends State<AuthCard> {
               TextFormField(
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
-                  labelText: "Email"
+                    labelText: "Email"
                 ),
                 validator: (valor){
                   if(valor.isEmpty || !valor.contains('@')){
@@ -157,21 +215,33 @@ class _AuthCardState extends State<AuthCard> {
               ),
 
               //Confirmação de senha de o modo de autenticação for singup
-
-              if(_authMode == AuthMode.SingUp)
-              TextFormField(
-                obscureText: true,
-                keyboardType: TextInputType.emailAddress,
-                decoration: InputDecoration(
-                    labelText: "Confirmar Senha"
+                AnimatedContainer(
+                  constraints: BoxConstraints(
+                    minHeight: _authMode == AuthMode.SingUp ? 60 :0,
+                    maxHeight: _authMode == AuthMode.SingUp ? 120 :0,
+                  ),
+                  duration: Duration(milliseconds: 300),
+                  curve: Curves.linear,
+                  child: FadeTransition(
+                    opacity: _opacityAnimation,
+                    child: SlideTransition(
+                      position: _slideAnimation,
+                      child: TextFormField(
+                        obscureText: true,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: InputDecoration(
+                            labelText: "Confirmar Senha"
+                        ),
+                        validator: _authMode == AuthMode.SingUp ? (valor){
+                          if(valor != _passwordController.text){
+                            return "Senhas diferentes";
+                          }
+                          return null;
+                        } : null,
+                      ),
+                    ),
+                  ),
                 ),
-                 validator: _authMode == AuthMode.SingUp ? (valor){
-                  if(valor != _passwordController.text){
-                    return "Senhas diferentes";
-                  }
-                  return null;
-                } : null,
-              ),
 
               Spacer(),
 
@@ -179,30 +249,31 @@ class _AuthCardState extends State<AuthCard> {
               if(_isLoading)
                 CircularProgressIndicator()
               else
-              RaisedButton(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30)
+                RaisedButton(
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30)
+                  ),
+                  color: Theme.of(context).primaryColor,
+                  textColor: Theme.of(context).primaryTextTheme.button.color,
+                  padding: EdgeInsets.symmetric(horizontal: 30,vertical: 8),
+                  child: _authMode == AuthMode.Login ? Text("ENTRAR")
+                      : Text("REGISTRAR"),
+                  onPressed: (){
+                    _submit();
+                  },
                 ),
-                color: Theme.of(context).primaryColor,
-                textColor: Theme.of(context).primaryTextTheme.button.color,
-                padding: EdgeInsets.symmetric(horizontal: 30,vertical: 8),
-                child: _authMode == AuthMode.Login ? Text("ENTRAR")
-                : Text("REGISTRAR"),
-                onPressed: (){
-                  _submit();
-                },
-              ),
               FlatButton(
                 child: Text(
-                  "ALTERNAR P/ ${_authMode == AuthMode.Login ? "REGISTRAR" : "LOGIN"}"
+                    "ALTERNAR P/ ${_authMode == AuthMode.Login ? "REGISTRAR" : "LOGIN"}"
                 ),
                 textColor: Theme.of(context).primaryColor,
                 onPressed: _switchMode,
               )
             ],
           ),
-        )
-      ),
-    );
+        ),
+      )
+
+      );
   }
 }

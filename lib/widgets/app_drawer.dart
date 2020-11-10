@@ -1,5 +1,8 @@
 import 'package:create_shop/providers/auth_provider.dart';
+import 'package:create_shop/providers/order_provider.dart';
 import 'package:create_shop/util/app_routes.dart';
+import 'package:create_shop/util/custom_route.dart';
+import 'package:create_shop/views/orders_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -25,7 +28,7 @@ class AppDrawer extends StatelessWidget {
               "Loja"
             ),
             onTap: (){
-              Navigator.of(context).popAndPushNamed(
+              Navigator.of(context).pushReplacementNamed(
                 AppRoutes.AUTH_HOME
               );
             },
@@ -39,7 +42,15 @@ class AppDrawer extends StatelessWidget {
                 "Pedidos"
             ),
             onTap: (){
-              Navigator.of(context).popAndPushNamed(
+              //antes
+              /*Navigator.of(context).popAndPushNamed(
+                  AppRoutes.ORDERS
+              );*/
+              //depois com a animação configurada
+              //Navigator.of(context).pushReplacement(
+                //  CustomRoute(builder: (context)=> OrdersScreen())
+              //);
+              Navigator.of(context).pushReplacementNamed(
                   AppRoutes.ORDERS
               );
             },
@@ -53,7 +64,7 @@ class AppDrawer extends StatelessWidget {
                 "Gerenciar produtos"
             ),
             onTap: (){
-              Navigator.of(context).popAndPushNamed(
+              Navigator.of(context).pushReplacementNamed(
                   AppRoutes.PRODUCTS
               );
             },

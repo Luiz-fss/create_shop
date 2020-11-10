@@ -2,6 +2,7 @@ import 'package:create_shop/models/product.dart';
 import 'package:create_shop/providers/auth_provider.dart';
 import 'package:create_shop/providers/cart_provider.dart';
 import 'package:create_shop/util/app_routes.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -34,7 +35,14 @@ class ProductGridItem extends StatelessWidget {
 
              */
           },
-          child: Image.network(product.imageUrl,fit: BoxFit.cover,),
+          child: Hero(
+            tag: product.id,
+            child: FadeInImage(
+                placeholder: AssetImage('assets/images/product-placeholder.png'),
+                image: NetworkImage(product.imageUrl),
+                fit: BoxFit.cover
+            ),
+          ),
         ),
         footer: GridTileBar(
           backgroundColor: Colors.black87,
